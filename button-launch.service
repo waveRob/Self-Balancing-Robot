@@ -1,0 +1,11 @@
+[Unit]
+Description=Run PID controller when button pressed
+After=multi-user.target
+
+[Service]
+ExecStart=/usr/bin/python3 /usr/local/bin/button_launcher.py
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
