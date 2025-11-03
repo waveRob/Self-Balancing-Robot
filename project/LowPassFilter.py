@@ -1,3 +1,5 @@
+
+
 class LowPassFilter:
     def __init__(self, Tf, dt):
         self.alpha = Tf / (Tf + dt)

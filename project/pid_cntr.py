@@ -1,3 +1,8 @@
+"""
+Main file:
+Cascaded PID controller for self balancing robot
+"""
+
 import json, socket, time, threading
 import rcpy
 import rcpy.mpu9250 as mpu
@@ -65,7 +70,7 @@ pid_stab = PIDController(
     dt = CYCLETIME,
     )
 
-balanc_ang = 12.5  # balancing angle
+angl_offset = 13.0  # balancing angle
 
 
 # Init Filter #
@@ -82,7 +87,7 @@ wheel_speed = 0.0
 
 # Init Variables #
 u = 0.0
-filt_ang = 0.0
+filt_angl = 0.0
 e_pre = e_int  = 0.0
 countdown = 3*SPS
 dt = 1.0/SPS
@@ -136,9 +141,9 @@ try:
         
         
         # Get Tilt Angle #
-        filt_ang = complementary_filter(filt_ang, gx, ay, az, dt, Tf=0.3)
+        filt_angl = complementary_filter(filt_angl, gx, ay, az, dt, Tf=0.3)
         
-        if filt_ang >= balanc_ang + MAX_ANGLE or filt_ang <= balanc_ang - MAX_ANGLE:
+        if filt_angl >= angl_offset + MAX_ANGLE or filt_angl <= angl_offset - MAX_ANGLE:
             print(f"Angle limit reached")
             break
         
@@ -146,8 +151,8 @@ try:
         # Controller #
         throttle = k_throttle * lpf_throttle.step(jstick_y)
         steering = k_steering * lpf_steering.step(jstick_x)
-        ref_angle = lpf_angl.step(pid_angl.step(-throttle-wheel_speed)) + balanc_ang 
-        u = pid_stab.step(ref_angle - filt_ang)
+        ref_angl = lpf_angl.step(pid_angl.step(-throttle-wheel_speed)) + angl_offset 
+        u = pid_stab.step(ref_angl - filt_angl)
         
         u_left = u - steering
         u_right = u + steering
@@ -161,7 +166,9 @@ try:
 
         # Send Date to Host #
         msg = {
-            "t": laptime_start, "filt_ang": filt_ang, "cntr_ref":balanc_ang,
+            "t": laptime_start, "filt_angl": filt_angl, "ref_angl":ref_angl,
+             "angl_u": pid_angl.u, "angl_up": pid_angl.u_p, "angl_ud": pid_angl.u_d, "angl_ui": pid_angl.u_i,
+             "stab_u": pid_stab.u, "stab_up": pid_stab.u_p, "stab_ud": pid_stab.u_d, "stab_ui": pid_stab.u_i,
         }
         sock.sendto((json.dumps(msg) + "\n").encode(), (HOST, PORT))
 

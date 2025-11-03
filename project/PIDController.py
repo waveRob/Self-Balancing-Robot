@@ -9,8 +9,13 @@ class PIDController:
         self.k_i = k_i
         self.e_int_max = e_int_max
         
-        self.e_int = 0
-        self.e_pre = 0
+        self.u = 0.0
+        self.u_p = 0.0
+        self.u_d = 0.0
+        self.u_i = 0.0
+        
+        self.e_int = 0.0
+        self.e_pre = 0.0
         
     def step(self, error):
     
@@ -21,11 +26,11 @@ class PIDController:
         e_diff = (e - self.e_pre) / self.dt
         self.e_pre = e
         
-        u_p = self.k_p * e
-        u_d = self.k_d * e_diff
-        u_i = self.k_i * self.e_int
-        u = u_p + u_d + u_i
+        self.u_p = self.k_p * e
+        self.u_d = self.k_d * e_diff
+        self.u_i = self.k_i * self.e_int
+        self.u = self.u_p + self.u_d + self.u_i
         
-        return u
+        return self.u
         
         
